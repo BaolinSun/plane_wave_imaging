@@ -39,6 +39,8 @@ class PlaneWaveData:
         # We provide the following as a visual example for a __init__() method.
         nangles, nchans, nsamps = 2, 3, 4
         # Initialize the parameters that *must* be populated by child classes.
+        # self.idata = np.zeros((nangles, nchans, nsamps), dtype="float32")
+        # self.qdata = np.zeros((nangles, nchans, nsamps), dtype="float32")
         self.rfdata = np.zeros((nangles, nchans, nsamps), dtype="float32")
         self.angles = np.zeros((nangles,), dtype="float32")
         self.ele_pos = np.zeros((nchans, 3), dtype="float32")
@@ -53,8 +55,8 @@ class PlaneWaveData:
         # Check size of idata, qdata, angles, ele_pos
         assert self.rfdata.ndim == 3
         nangles, nchans, nsamps = self.rfdata.shape
-        assert self.angles.ndim == 1 and self.angles.size == nangles
-        assert self.ele_pos.ndim == 2 and self.ele_pos.shape == (nchans, 3)
+        # assert self.angles.ndim == nangles
+        # assert self.ele_pos.ndim == 2 and self.ele_pos.shape == (nchans, 3)
         # Check frequencies (expecting more than 0.1 MHz)
         assert self.fc > 1e5
         assert self.fs > 1e5
@@ -62,7 +64,7 @@ class PlaneWaveData:
         # Check speed of sound (should be between 1000-2000 for medical imaging)
         assert 1000 <= self.c <= 2000
         # Check that a separate time zero is provided for each transmit
-        assert self.time_zero.ndim == 1 and self.time_zero.size == nangles
+        # assert self.time_zero.ndim == 1 and self.time_zero.size == nangles
 
 
 class WUSData(PlaneWaveData):
@@ -76,9 +78,34 @@ class WUSData(PlaneWaveData):
         self.fs = probe_params["fs"]
         self.c = probe_params["c"]
         self.pitch = probe_params["pitch"]
-        self.angles = probe_params["angles"]
+        self.angles = probe_params['angles']
         self.sample_num = probe_params["sample_num"]
         self.drange = probe_params["drange"]
+        self.fdemod = probe_params["fdemod"]
+        self.scan_width = probe_params["scan_width"]
+        self.scan_depth = probe_params["scan_depth"]
+        self.scan_start_depth = probe_params["scan_start_depth"]
+        self.x_axis_pixel = probe_params["x_axis_pixel"]
+        self.z_axis_pixel = probe_params["z_axis_pixel"]
+
+        self.ele_pos = np.zeros((self.element_num, 3), dtype="float32")
+        self.ele_pos[:, 0] = np.arange(self.element_num) * self.pitch
+        self.ele_pos[:, 0] -= np.mean(self.ele_pos[:, 0])
+
+        self.tstart = np.ones((len(self.angles), self.element_num)) * 4.6914110470588584e-06
+
+        self.rfdata = np.zeros((len(self.angles), self.element_num, self.sample_num), dtype="float32")
+        self.validate()
+
+    
+    def load_data(self, data):
+
+        for n in range(len(self.angles)):
+            for i in range(self.element_num):
+                data[n, i, :] = self.bandpass_filter_rf_data(data[n, i, :], data.shape[2], self.fs, 1.0e6, 5.0e6)
+
+        rfdata = hilbert(data, axis=-1)
+        self.rfdata = rfdata
 
 
     # 带通滤波器

@@ -1,12 +1,18 @@
 {
-    "fc": 7500000.0,
+    "fc": 7.5e6,
     "element_num": 64,
-    "pitch": 0.0004,
-    "width": 0.17e-3,
-    "kerf": 0.23e-3,
-    "fs": 25000000.0,
+    "pitch": 0.3e-3,
+    "width": 0,
+    "kerf": 0,
+    "fs": 25e6,
     "c": 1540,
-    "angles": 3,
-    "drange": 50,
-    "fdemod": 0
+    "angles": [-15, 0, 15],
+    "drange": 40,
+    "sample_num": 2048,
+    "fdemod": 0,
+    "scan_width": 30e-3,
+    "scan_depth": 60e-3,
+    "scan_start_depth": 0e-3,
+    "x_axis_pixel": 128,
+    "z_axis_pixel": 128
 }
